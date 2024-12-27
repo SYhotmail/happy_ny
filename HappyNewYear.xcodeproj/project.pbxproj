@@ -8,6 +8,8 @@
 
 /* Begin PBXFileReference section */
 		218375502D1EA15800C15B01 /* HappyNewYear.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HappyNewYear.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		218375772D1F1E1500C15B01 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = SOURCE_ROOT; };
+		218375782D1F1E1500C15B01 /* xmas.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = xmas.gif; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -52,6 +54,7 @@
 		218375322D1EA15200C15B01 = {
 			isa = PBXGroup;
 			children = (
+				218375762D1F1E0700C15B01 /* Files */,
 				218375372D1EA15300C15B01 /* HappyNewYear Shared */,
 				218375512D1EA15800C15B01 /* HappyNewYear macOS */,
 				218375402D1EA15800C15B01 /* Products */,
@@ -64,6 +67,15 @@
 				218375502D1EA15800C15B01 /* HappyNewYear.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		218375762D1F1E0700C15B01 /* Files */ = {
+			isa = PBXGroup;
+			children = (
+				218375772D1F1E1500C15B01 /* README.md */,
+				218375782D1F1E1500C15B01 /* xmas.gif */,
+			);
+			path = Files;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

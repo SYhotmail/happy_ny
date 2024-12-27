@@ -32,10 +32,6 @@ class GameController: NSObject, SCNSceneRendererDelegate {
         treeNode = scene.rootNode.childNode(withName: "tree", recursively: false)!
         super.init()
         
-        /*if let tree = scene.rootNode.childNode(withName: "tree", recursively: true) {
-            tree.runAction(SCNAction.repeatForever(SCNAction.rotateBy(x: 0, y: 2, z: 0, duration: 1)))
-        }*/
-        
         setupScene()
         
         sceneRenderer.scene = scene
@@ -61,142 +57,6 @@ class GameController: NSObject, SCNSceneRendererDelegate {
         await setupTextNode(refNode: treeNode)
         
     }
-    
-    /*func bendTextAlongArc(textGeometry: SCNGeometry, arcRadius: Float, startAngle: Float, endAngle: Float) -> SCNGeometry {
-        guard let mesh = textGeometry as? SCNMesh else { return textGeometry }
-        
-        var vertices = mesh.vertices
-        let numVertices = vertices.count
-        
-        for i in 0..<numVertices {
-            let vertex = vertices[i]
-            let angle = Float(i) * (endAngle - startAngle) / Float(numVertices - 1) + startAngle
-            
-            // Calculate the new position based on the arc
-            let newX = vertex.x * cos(angle) - vertex.z * sin(angle)
-            let newY = vertex.y
-            let newZ = vertex.x * sin(angle) + vertex.z * cos(angle)
-            
-            // Scale the vertex along the arc
-            let scaleFactor = arcRadius / sqrt(newX * newX + newY * newY + newZ * newZ)
-            vertices[i] = SCNVector3(x: newX * scaleFactor, y: newY * scaleFactor, z: newZ * scaleFactor)
-        }
-        
-        let deformedMesh = SCNMesh(mesh: .vertexBuffer, vertices: vertices, indices: mesh.indices)
-        return SCNGeometry(mesh: deformedMesh)
-    } */
-    
-    func bendMesh(of geometry: SCNGeometry, alongAxis axis: String, radius: CGFloat) -> SCNGeometry! {
-        guard let vertexSource = geometry.sources(for: .vertex).first else {
-            print("No vertex source found")
-            return nil
-        }
-
-        // Access vertex data
-        let data = vertexSource.data
-        let stride = vertexSource.dataStride
-        let offset = vertexSource.dataOffset
-        let count = vertexSource.vectorCount
-
-        var newVertexData = Data(capacity: data.count)
-
-        // Bending transformation
-        let bendFunction: (SCNVector3) -> SCNVector3 = { vertex in
-            var newVertex = vertex
-            
-            switch axis.lowercased() {
-            case "x":
-                let theta = vertex.x / radius
-                newVertex.x = radius * sin(theta)
-                newVertex.z = radius * (1 - cos(theta))
-            case "z":
-                let theta = vertex.z / radius
-                newVertex.z = radius * sin(theta)
-                newVertex.x = radius * (1 - cos(theta))
-            default:
-                print("Invalid axis. Use 'x' or 'z'.")
-            }
-            
-            return newVertex
-        }
-
-        // Modify vertex positions
-        data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
-            for i in 0..<count {
-                let byteIndex = i * stride + offset
-                let floatPointer = buffer.baseAddress!.advanced(by: byteIndex).assumingMemoryBound(to: Float.self)
-                let originalVertex = SCNVector3(floatPointer[0], floatPointer[1], floatPointer[2])
-                let modifiedVertex = bendFunction(originalVertex)
-                newVertexData.append(contentsOf: [modifiedVertex.x, modifiedVertex.y, modifiedVertex.z].map { UInt8($0.bitPattern) })
-            }
-        }
-
-        // Create a new geometry source with modified vertices
-        let newVertexSource = SCNGeometrySource(
-            data: newVertexData,
-            semantic: .vertex,
-            vectorCount: count,
-            usesFloatComponents: true,
-            componentsPerVector: vertexSource.componentsPerVector,
-            bytesPerComponent: MemoryLayout<Float>.size,
-            dataOffset: offset,
-            dataStride: stride
-        )
-
-        // Reuse geometry elements (topology remains the same)
-        guard geometry.elementCount != 0 else {
-            return geometry
-        }
-        return SCNGeometry(sources: [newVertexSource], elements: geometry.elements)
-    }
-    
-    func createTextOnArc(text: String, radius: CGFloat, startAngle: CGFloat, angularSpan: CGFloat) -> SCNNode {
-        let parentNode = SCNNode() // Container node for the text
-
-        // Calculate the angle per character
-        let anglePerCharacter = angularSpan / CGFloat(text.count)
-        
-        for (index, character) in text.enumerated() {
-            // Create SCNText for each character
-            let charGeometry = SCNText(string: String(character), extrusionDepth: 0)
-            charGeometry.font = SCNFont.preferredFont(forTextStyle: .body)
-            charGeometry.flatness = 0.1
-            charGeometry.firstMaterial?.diffuse.contents = SCNColor.white
-            
-            // Create a node for the character
-            let charNode = SCNNode(geometry: charGeometry)
-            
-            // Calculate the angle for this character
-            let angle = startAngle + anglePerCharacter * CGFloat(index)
-            
-            // Calculate the position on the arc
-            let x = radius * cos(angle)
-            let y = radius * sin(angle)
-            
-            charNode.position = SCNVector3(x, y, 0)
-            
-            // Rotate the character to align with the arc
-            charNode.eulerAngles = SCNVector3(0, 0, angle)
-            
-            // Add the character node to the parent node
-            parentNode.addChildNode(charNode)
-        }
-        
-        return parentNode
-    }
-
-    
-    /*
-     // Example usage
-    let text = "Hello, SceneKit!"
-    let radius: CGFloat = 10.0
-    let startAngle: CGFloat = -.pi / 4 // Start at -45 degrees
-    let angularSpan: CGFloat = .pi / 2 // Span 90 degrees
-    let fontSize: CGFloat = 1.0
-
-    let arcTextNode = createTextOnArc(text: text, radius: radius, startAngle: startAngle, angularSpan: angularSpan, fontSize: fontSize)
-     */
-    
     private func setupTextNode(refNode: SCNNode) async {
         let text = SCNText()
         
@@ -218,18 +78,10 @@ class GameController: NSObject, SCNSceneRendererDelegate {
         rect.size.height *= 2
         text.containerFrame = rect
         
-        let textNode = SCNNode(geometry: text)//bendMesh(of: text, alongAxis: "x", radius: 10.0) ?? text)
-        //debugPrint("!!! text size \(text.textSize)")
-        
-        /*let text = "Hello, SceneKit!"
-        let radius: CGFloat = 10.0
-        let startAngle: CGFloat = -.pi / 4 * 0 // Start at -45 degrees
-        let angularSpan: CGFloat = .pi / 4 * 0 // Span 90 degrees
-        
-        let textNode = createTextOnArc(text: text, radius: radius, startAngle: startAngle, angularSpan: angularSpan)*/
+        let textNode = SCNNode(geometry: text)
         
         guard let refNodeParent = refNode.parent, let boundingBox = refNode.geometry?.boundingBox else {
-            assertionFailure("No paretn!")
+            assertionFailure("No parent!")
             return
         }
         
@@ -274,16 +126,6 @@ class GameController: NSObject, SCNSceneRendererDelegate {
                 light.type = .omni
                 light.intensity = 10
                 light.color = SCNColor.white
-                
-                /*let depthAnimation = CABasicAnimation(keyPath: "intensity")
-                depthAnimation.duration = basicDuration
-                depthAnimation.fromValue = light.intensity
-                depthAnimation.toValue = light.intensity * 1.2
-                
-                let caDepthAnimation = SCNAnimation(caAnimation: depthAnimation)
-                caDepthAnimation.autoreverses = true
-                caDepthAnimation.repeatCount = .infinity //forever...
-                light.addAnimation(caDepthAnimation, forKey: "intensity") */
                 
                 node.light = light
                 geometry.firstMaterial?.diffuse.contents = color
